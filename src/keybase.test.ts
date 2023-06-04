@@ -2,6 +2,9 @@ import { KeyBase } from './keybase'
 import { toMemSnapshot as serialize } from './utils'
 import { test, expect } from 'vitest'
 
+const take = async (keyBase: KeyBase) =>
+  new Uint8Array(await keyBase.toBlob().arrayBuffer())
+
 expect.addSnapshotSerializer({
   test: val => val instanceof Uint8Array,
   serialize
@@ -13,9 +16,6 @@ test('should to blob', async () => {
     new Blob([new Uint8Array(16).fill(18)], { type: 'application/data' }),
     '39c72e7d-0001-4e0d-a03d-db7089b705f7'
   )
-
-  const take = async (keyBase: KeyBase) =>
-    new Uint8Array(await keyBase.toBlob().arrayBuffer())
 
   expect(await take(keybase)).toMatchInlineSnapshot(`
     4b 42 00 01 00 00 00 00 00 01 00 00 00 30 00 00
