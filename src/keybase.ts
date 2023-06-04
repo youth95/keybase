@@ -8,15 +8,20 @@ export class KeyBase {
   private types: string[] = []
 
   async load (file: Blob) {
-    this._assets = {}
+    if (!KeyBase.verify(file)) {
+      throw new Error(`not found magic word`)
+    }
+    this.clear()
     const reader = new BlobReader(file)
-    const version = await reader.getU16()
+
+    const version = await reader.skipU16().getU16()
+
     if (version === 1) {
       const indexTableRowCount = await reader.skipU16().getU32()
       const typesDataLength = await reader.getU32()
       const indexTableData = await file
         .slice(
-          reader.skipU32().cur,
+          reader.skipU16().cur,
           reader.cur + INDEX_TABLE_ROW_SIZE * indexTableRowCount
         )
         .arrayBuffer()
@@ -25,9 +30,8 @@ export class KeyBase {
       this.types = await reader.getStringArray(typesDataLength)
 
       for (let i = 0; i < indexTableRowCount; i++) {
-        const id = stringify(
-          new Uint8Array(indexTableData, i * INDEX_TABLE_ROW_SIZE, 16)
-        )
+        const idb = new Uint8Array(indexTableData, i * INDEX_TABLE_ROW_SIZE, 16)
+        const id = stringify(idb)
         const reader = new DataView(
           indexTableData,
           i * INDEX_TABLE_ROW_SIZE + 16
@@ -42,9 +46,14 @@ export class KeyBase {
     }
   }
 
+  clear () {
+    this._assets = {}
+    this.types = []
+  }
+
   toBlob (): Blob {
     const ids = Array.from(Object.keys(this.assets))
-    const indexTableHeaderSize = 2 + 2 + 4 + 8
+    const indexTableHeaderSize = 2 + 2 + 4 + 6
     const indexTableSize = Number(INDEX_TABLE_ROW_SIZE) * ids.length
 
     const indexTableHeader = new DataView(new ArrayBuffer(indexTableHeaderSize))
@@ -62,7 +71,7 @@ export class KeyBase {
 
     indexTableHeader.setUint32(8, typeIndex.size)
 
-    let assetOffset = indexTableHeaderSize + indexTableSize + typeIndex.size
+    let assetOffset = 2 + indexTableHeaderSize + indexTableSize + typeIndex.size
 
     const indexTable = new Blob(
       ids.map(id => {
@@ -84,7 +93,9 @@ export class KeyBase {
     )
     const assets = ids.map(id => this.assets[id])
     return new Blob(
-      [new Blob([indexTableHeader, indexTable, typeIndex])].concat(assets),
+      ['KB', new Blob([indexTableHeader, indexTable, typeIndex])].concat(
+        assets
+      ),
       { type: 'application/keybase' }
     )
   }
@@ -100,7 +111,17 @@ export class KeyBase {
     return id
   }
 
+  remove (id: string) {
+    delete this._assets[id]
+  }
+
   get assets () {
     return this._assets
+  }
+
+  static async verify (file: Blob): Promise<boolean> {
+    const reader = new BlobReader(file)
+    const magic = await reader.getU16()
+    return magic === 19266 // magic === 'KB'
   }
 }
