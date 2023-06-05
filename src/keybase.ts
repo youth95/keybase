@@ -1,19 +1,28 @@
 import { v4, parse, stringify } from 'uuid'
 import { BlobReader } from './BlobReader'
 
-const INDEX_TABLE_ROW_SIZE = 16 + 4 + 4 + 2 + 6
+const INDEX_TABLE_ROW_SIZE = 48
+
+interface Asset {
+  data: Blob,
+  lastUpdateTime: number;
+}
+
+
 
 export class KeyBase {
-  private _assets: Record<string, Blob> = {}
+  private _assets: Record<string, Asset> = {}
   private types: string[] = []
 
-  async load (file: Blob) {
+  readonly dirty: Set<string> = new Set()
+  readonly deleted: Set<string> = new Set()
+
+  async load(file: Blob) {
     if (!KeyBase.verify(file)) {
       throw new Error(`not found magic word`)
     }
     this.clear()
     const reader = new BlobReader(file)
-
     const version = await reader.skipU16().getU16()
 
     if (version === 1) {
@@ -38,21 +47,27 @@ export class KeyBase {
         )
         const addr = reader.getUint32(0)
         const size = reader.getUint32(4)
-        const type = reader.getUint16(8)
-        this.assets[id] = file.slice(addr, addr + size, this.types[type])
+        const lastUpdateTime = Number(reader.getBigUint64(8))
+        const type = reader.getUint16(16)
+        this.assets[id] = {
+          data: file.slice(addr, addr + size, this.types[type]),
+          lastUpdateTime,
+        }
       }
     } else {
       throw new Error(`not impl for version ${version}`)
     }
   }
 
-  clear () {
+  clear() {
     this._assets = {}
     this.types = []
+    this.dirty.clear()
+    this.deleted.clear()
   }
 
-  toBlob (): Blob {
-    const ids = Array.from(Object.keys(this.assets))
+  toBlob(): Blob {
+    let ids = Array.from(Object.keys(this.assets))
     const indexTableHeaderSize = 2 + 2 + 4 + 6
     const indexTableSize = Number(INDEX_TABLE_ROW_SIZE) * ids.length
 
@@ -75,23 +90,21 @@ export class KeyBase {
 
     const indexTable = new Blob(
       ids.map(id => {
-        const { size, type } = this.assets[id]
-        const addrAndSize = new DataView(new ArrayBuffer(8))
-        addrAndSize.setUint32(0, assetOffset)
-        addrAndSize.setUint32(4, size)
-        const typePart = new DataView(new ArrayBuffer(2))
-        typePart.setUint16(0, this.types.indexOf(type))
+        const { data: { size, type }, lastUpdateTime } = this.assets[id]
+        const view = new DataView(new ArrayBuffer(32))
+        view.setUint32(0, assetOffset)
+        view.setUint32(4, size)
+        view.setBigInt64(8, BigInt(lastUpdateTime))
+        view.setUint16(16, this.types.indexOf(type))
         const part = new Blob([
           parse(id),
-          addrAndSize,
-          typePart,
-          new Uint8Array(6)
+          view,
         ])
         assetOffset += size
         return part
       })
     )
-    const assets = ids.map(id => this.assets[id])
+    const assets = ids.map(id => this.assets[id].data)
     return new Blob(
       ['KB', new Blob([indexTableHeader, indexTable, typeIndex])].concat(
         assets
@@ -100,26 +113,32 @@ export class KeyBase {
     )
   }
 
-  set (blob: Blob, id: string = v4()): string {
+  set(blob: Blob, id: string = v4(), lastUpdateTime = new Date().valueOf()): string {
     if (blob.type === '') {
       throw new Error('asset must has type')
     }
     if (!this.types.includes(blob.type)) {
       this.types.push(blob.type)
     }
-    this.assets[id] = blob
+    this.assets[id] = {
+      data: blob,
+      lastUpdateTime,
+    }
+    this.dirty.add(id)
+
     return id
   }
 
-  remove (id: string) {
+  remove(id: string) {
     delete this._assets[id]
+    this.deleted.add(id)
   }
 
-  get assets () {
+  get assets() {
     return this._assets
   }
 
-  static async verify (file: Blob): Promise<boolean> {
+  static async verify(file: Blob): Promise<boolean> {
     const reader = new BlobReader(file)
     const magic = await reader.getU16()
     return magic === 19266 // magic === 'KB'
