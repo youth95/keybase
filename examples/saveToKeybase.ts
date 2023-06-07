@@ -33,10 +33,7 @@ const toBlobs = async (dataTransfer: DataTransfer | null) => {
 
 const attachBlobs = (ev: Context): Context => {
   const blobs = call(pipe(toDataTransfer, toBlobs), ev)
-  return {
-    ...ev,
-    blobs
-  }
+  return Object.assign(ev, { blobs })
 }
 
 export const saveToKeybase = pipe(attachBlobs, async context => {

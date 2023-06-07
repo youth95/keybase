@@ -10,7 +10,7 @@ export const loadFromLocal = () => {
     const request = transaction.objectStore('files').getAll()
     request.addEventListener('success', () => {
       for (const { id, value } of request.result) {
-        kb.set(value, id)
+        kb.set(value.data, id, value.lastUpdateTime)
       }
       showElementFromKeybaseInstance()
     })
