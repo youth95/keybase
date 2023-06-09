@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  comlink:
+    specifier: ^4.4.1
+    version: 4.4.1
   ramda:
     specifier: ^0.29.0
     version: 0.29.0
@@ -22,6 +25,9 @@ devDependencies:
   vite:
     specifier: ^4.3.9
     version: 4.3.9(@types/node@20.2.5)
+  vite-plugin-comlink:
+    specifier: ^3.0.5
+    version: 3.0.5(comlink@4.4.1)(vite@4.3.9)
   vitest:
     specifier: ^0.31.4
     version: 0.31.4
@@ -344,6 +350,9 @@ packages:
     resolution: {integrity: sha512-BrgHpW9NURQgzoNyjfq0Wu6VFO6D7IZEmJNdtgNqpzGG8RuNFHt2jQxWlAs4HMe119chBnv+34syEZtc6IhLtA==}
     dev: true
 
+  /comlink@4.4.1:
+    resolution: {integrity: sha512-+1dlx0aY5Jo1vHy/tSsIGpSkN4tS9rZSW8FIhG0JH/crs9wwweswIo/POr451r7bZww3hFbPAKnTpimzL/mm4Q==}
+
   /concordance@5.0.4:
     resolution: {integrity: sha512-OAcsnTEYu1ARJqWVGwf4zh4JDfHZEaSNlNccFmt8YjB2l/n19/PF2viLINHc57vO4FKIAFl2FWASIGZZWZ2Kxw==}
     engines: {node: '>=10.18.0 <11 || >=12.14.0 <13 || >=14'}
@@ -440,6 +449,12 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
+  /json5@2.2.1:
+    resolution: {integrity: sha512-1hqLFMSrGHRHxav9q9gNjJ5EXznIxGVO09xQRrwplcS8qs28pZ8s8hupZAmqDwZUmVZ2Qb2jnyPOWcDH8m8dlA==}
+    engines: {node: '>=6'}
+    hasBin: true
+    dev: true
+
   /jsonc-parser@3.2.0:
     resolution: {integrity: sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==}
     dev: true
@@ -464,6 +479,13 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       yallist: 4.0.0
+    dev: true
+
+  /magic-string@0.26.7:
+    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
+    engines: {node: '>=12'}
+    dependencies:
+      sourcemap-codec: 1.4.8
     dev: true
 
   /magic-string@0.30.0:
@@ -577,6 +599,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /sourcemap-codec@1.4.8:
+    resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    deprecated: Please use @jridgewell/sourcemap-codec instead
+    dev: true
+
   /stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
     dev: true
@@ -653,6 +680,18 @@ packages:
       - sugarss
       - supports-color
       - terser
+    dev: true
+
+  /vite-plugin-comlink@3.0.5(comlink@4.4.1)(vite@4.3.9):
+    resolution: {integrity: sha512-my8BE9GFJEaLc7l3e2SfRUL8JJsN9On8PiW7q4Eyq3g6DHUsNqo5WlS7Butuzc8ngrs24Tf1RC8Xfdda+E5T9w==}
+    peerDependencies:
+      comlink: ^4.3.1
+      vite: '>=2.9.6'
+    dependencies:
+      comlink: 4.4.1
+      json5: 2.2.1
+      magic-string: 0.26.7
+      vite: 4.3.9(@types/node@20.2.5)
     dev: true
 
   /vite@4.3.9(@types/node@20.2.5):

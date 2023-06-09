@@ -44,8 +44,8 @@ export const toFileType = async (file: Blob) => {
   return 'application/binary'
 }
 
-export const createElement = document.createElement.bind(document)
-export const createDOM = (target: string) => () => createElement(target)
+export const createDOM = (target: string) => () =>
+  document.createElement(target)
 
 export const setDOMProps =
   (props: Record<string, any>) => (el: HTMLElement) => {

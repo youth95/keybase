@@ -1,7 +1,7 @@
 import { call, pipe } from 'ramda'
 import { createDOM, setDOMProps, toFileType } from './utils'
 import { assetLoaders } from './assetLoaders'
-import { dropzoneDOM } from './context'
+import { dropzoneDOM } from './dom'
 
 export const appendToDropzoneDOM = (el: Element) => dropzoneDOM?.append(el)
 

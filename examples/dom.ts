@@ -1,0 +1,1 @@
+export const dropzoneDOM = document.getElementById('dropzone')

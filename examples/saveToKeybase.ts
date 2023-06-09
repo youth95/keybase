@@ -2,11 +2,13 @@ import { call, pipe } from 'ramda'
 import { log, toDataTransfer, toFileType } from './utils'
 import { kb, mainId, runtime } from './context'
 
-interface Context extends DragEvent {
+interface Context {
+  clientX: number
+  clientY: number
   blobs?: Promise<Blob[]>
 }
 
-const toBlobs = async (dataTransfer: DataTransfer | null) => {
+export const toBlobs = async (dataTransfer: DataTransfer | null) => {
   if (!dataTransfer) {
     return []
   }
@@ -31,12 +33,12 @@ const toBlobs = async (dataTransfer: DataTransfer | null) => {
   return blobs
 }
 
-const attachBlobs = (ev: Context): Context => {
+const attachBlobs = (ev: (ClipboardEvent | DragEvent) & Context): Context => {
   const blobs = call(pipe(toDataTransfer, toBlobs), ev)
   return Object.assign(ev, { blobs })
 }
 
-export const saveToKeybase = pipe(attachBlobs, async context => {
+const _saveToKeybase = async (context: Context) => {
   const blobs = await context.blobs
   for (const blob of blobs ?? []) {
     if (blob.type === 'application/keybase') {
@@ -54,4 +56,13 @@ export const saveToKeybase = pipe(attachBlobs, async context => {
   }
   log(kb)
   return context
-})
+}
+
+export const saveToKeybase = pipe(attachBlobs, _saveToKeybase)
+
+export const saveToKeybaseFromBlobs = pipe(
+  (blobs: Blob[], clientX: number, clientY: number): Context => {
+    return { clientX, clientY, blobs: Promise.resolve(blobs) }
+  },
+  _saveToKeybase
+)
